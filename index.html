@@ -152,27 +152,34 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-picTest" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-Golang-无缓冲channel和有缓冲channel的区别和特点" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2020/06/29/picTest/">五笔字根键位图</a>
+      <a class="article-title" href="/2020/06/29/Golang-%E6%97%A0%E7%BC%93%E5%86%B2channel%E5%92%8C%E6%9C%89%E7%BC%93%E5%86%B2channel%E7%9A%84%E5%8C%BA%E5%88%AB%E5%92%8C%E7%89%B9%E7%82%B9/">Golang 无缓冲channel和有缓冲channel的区别和特点</a>
     </h1>
   
 
         
-        <a href="/2020/06/29/picTest/" class="archive-article-date">
-  	<time datetime="2020-06-29T08:04:25.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-06-29</time>
+        <a href="/2020/06/29/Golang-%E6%97%A0%E7%BC%93%E5%86%B2channel%E5%92%8C%E6%9C%89%E7%BC%93%E5%86%B2channel%E7%9A%84%E5%8C%BA%E5%88%AB%E5%92%8C%E7%89%B9%E7%82%B9/" class="archive-article-date">
+  	<time datetime="2020-06-29T10:46:18.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-06-29</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p><font face="黑体" color=black size=8>五笔字根键位图</font><br><img src="https://i.loli.net/2020/06/29/1849Qu5sjpYq2Ir.png" alt="image.png"></p>
+        <h1 id="阻塞的概念：-在执行过程中暂停，以等待某个条件的触发-，我们就称之为阻塞。"><a href="#阻塞的概念：-在执行过程中暂停，以等待某个条件的触发-，我们就称之为阻塞。" class="headerlink" title="阻塞的概念： 在执行过程中暂停，以等待某个条件的触发 ，我们就称之为阻塞。"></a>阻塞的概念： 在执行过程中暂停，以等待某个条件的触发 ，我们就称之为阻塞。</h1><p>具体来讲： go channel通道的阻塞是： 一直占用通道，不让其他人使用：<br>读取阻塞：一直卡住通道，不让别人读取，读到数据才释放通道。<br>发送阻塞：一直卡住通道，不让别人往通道发数据，除非通道对端数据被读取，阻塞才解除。 </p>
+<h1 id="无缓冲channel的特点：读取和发送必须同时进行，缺一个就会报错deadlock，也就是说："><a href="#无缓冲channel的特点：读取和发送必须同时进行，缺一个就会报错deadlock，也就是说：" class="headerlink" title="无缓冲channel的特点：读取和发送必须同时进行，缺一个就会报错deadlock，也就是说："></a>无缓冲channel的特点：读取和发送必须同时进行，缺一个就会报错deadlock，也就是说：</h1><p>只要往通道发了数据，就得立即读取消费。否则就会报错。换句话说，此时通道一直会等待被消费，并阻塞在这里<br>反过来：读取时，通道如为空，则会一直阻塞。<br>无缓冲通道就是这样，一次只能传输一个数据</p>
+<p><strong>总结一下无缓冲channel的特性：</strong><br>同一时刻，同时有 读、写两端把持 channel。<br>如果只有读端，没有写端，那么 “读端”阻塞。<br>如果只有写端，没有读端，那么 “写端”阻塞。<br>读channel： &lt;- channel<br>写channel： channel &lt;- 数据<br>无缓冲channel, 因为管道被释放的瞬间（写和读的握手完成），会存在资源抢占的问题，这时候会存在go func的行为和main函数内的行为交替出现的现象。</p>
+<h1 id="有缓冲channel的特点：只要缓冲区不为空-或者缓冲长度没满（即没超过定义的缓冲容量），则缓冲区不阻塞。"><a href="#有缓冲channel的特点：只要缓冲区不为空-或者缓冲长度没满（即没超过定义的缓冲容量），则缓冲区不阻塞。" class="headerlink" title="有缓冲channel的特点：只要缓冲区不为空/或者缓冲长度没满（即没超过定义的缓冲容量），则缓冲区不阻塞。"></a>有缓冲channel的特点：只要缓冲区不为空/或者缓冲长度没满（即没超过定义的缓冲容量），则缓冲区不阻塞。</h1><p>##有缓冲channel：</p>
+<pre><code>1. 只要通道不满，就不会阻塞
+2. 只要通道不空，就不会阻塞</code></pre><p>只要阻塞了（通道超过容量），就会出现go func的行为和main函数内的行为交替出现的现象<br>而且只要发生阻塞，读写双方就会发生管道交互（之前有缓冲时：读写是互相独立并行的操作）。</p>
+<p><img src="https://i.loli.net/2020/06/29/fz3i48aAjMJdmDt.png" alt="image.png"></p>
+<p>有缓冲通道，允许事前填充channel(但不超过通道容量)，这是跟无缓冲通道最本质的区别。<br>这个时候，只要通道容量没有超过，协程不必等待通道内容被消费才释放通道，也就不存在阻塞的问题。</p>
 
       
 
@@ -185,7 +192,7 @@
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2020/06/29/picTest/">展开全文 >></a>
+          <a class="article-more-a" href="/2020/06/29/Golang-%E6%97%A0%E7%BC%93%E5%86%B2channel%E5%92%8C%E6%9C%89%E7%BC%93%E5%86%B2channel%E7%9A%84%E5%8C%BA%E5%88%AB%E5%92%8C%E7%89%B9%E7%82%B9/">展开全文 >></a>
         </p>
       
 
@@ -228,7 +235,7 @@
 
         
         <a href="/2020/06/29/hello-world/" class="archive-article-date">
-  	<time datetime="2020-06-29T03:21:57.491Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-06-29</time>
+  	<time datetime="2020-06-29T10:38:49.758Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-06-29</time>
 </a>
         
       </header>
@@ -261,6 +268,69 @@
       
         <p class="article-more-link">
           <a class="article-more-a" href="/2020/06/29/hello-world/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-picTest" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2020/06/29/picTest/">五笔字根键位图</a>
+    </h1>
+  
+
+        
+        <a href="/2020/06/29/picTest/" class="archive-article-date">
+  	<time datetime="2020-06-29T08:04:25.000Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2020-06-29</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><font face="黑体" color=black size=8>五笔字根键位图</font><br><img src="https://i.loli.net/2020/06/29/1849Qu5sjpYq2Ir.png" alt="image.png"></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2020/06/29/picTest/">展开全文 >></a>
         </p>
       
 
